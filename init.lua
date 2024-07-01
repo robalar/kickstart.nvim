@@ -157,6 +157,51 @@ require('lazy').setup({
         topdelete = { text = '‾' },
         changedelete = { text = '~' },
       },
+      on_attach = function(buffer)
+        local gs = package.loaded.gitsigns
+
+        local function map(mode, l, r, desc)
+          vim.keymap.set(mode, l, r, { buffer = buffer, desc = desc })
+        end
+
+        map('n', ']h', function()
+          if vim.wo.diff then
+            vim.cmd.normal { ']c', bang = true }
+          else
+            gs.nav_hunk 'next'
+          end
+        end, 'Next Hunk')
+        map('n', '[h', function()
+          if vim.wo.diff then
+            vim.cmd.normal { '[c', bang = true }
+          else
+            gs.nav_hunk 'prev'
+          end
+        end, 'Prev Hunk')
+        map('n', ']H', function()
+          gs.nav_hunk 'last'
+        end, 'Last Hunk')
+        map('n', '[H', function()
+          gs.nav_hunk 'first'
+        end, 'First Hunk')
+        map({ 'n', 'v' }, '<leader>ghs', ':Gitsigns stage_hunk<CR>', 'Stage Hunk')
+        map({ 'n', 'v' }, '<leader>ghr', ':Gitsigns reset_hunk<CR>', 'Reset Hunk')
+        map('n', '<leader>ghS', gs.stage_buffer, 'Stage Buffer')
+        map('n', '<leader>ghu', gs.undo_stage_hunk, 'Undo Stage Hunk')
+        map('n', '<leader>ghR', gs.reset_buffer, 'Reset Buffer')
+        map('n', '<leader>ghp', gs.preview_hunk_inline, 'Preview Hunk Inline')
+        map('n', '<leader>ghb', function()
+          gs.blame_line { full = true }
+        end, 'Blame Line')
+        map('n', '<leader>ghB', function()
+          gs.blame()
+        end, 'Blame Buffer')
+        map('n', '<leader>ghd', gs.diffthis, 'Diff This')
+        map('n', '<leader>ghD', function()
+          gs.diffthis '~'
+        end, 'Diff This ~')
+        map({ 'o', 'x' }, 'ih', ':<C-U>Gitsigns select_hunk<CR>', 'GitSigns Select Hunk')
+      end,
     },
   },
 
@@ -400,10 +445,11 @@ require('lazy').setup({
             ['rust-analyzer'] = {
               procMacro = { enable = true },
               checkOnSave = { command = 'clippy' },
+              cargo = { allFeatures = true },
             },
           },
-          on_attach = function(client, bufnr)
-            vim.lsp.inlay_hint.enable(bufnr)
+          on_attach = function()
+            vim.lsp.inlay_hint.enable()
           end,
         },
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
@@ -476,6 +522,7 @@ require('lazy').setup({
         -- You can use a sub-list to tell conform to run *until* a formatter
         -- is found.
         -- javascript = { { "prettierd", "prettier" } },
+        -- json = { 'jq' },
       },
     },
   },
@@ -621,8 +668,6 @@ require('lazy').setup({
       --  You could remove this setup call if you don't like it,
       --  and try some other statusline plugin
       local statusline = require 'mini.statusline'
-      -- set use_icons to true if you have a Nerd Font
-      statusline.setup { use_icons = vim.g.have_nerd_font }
 
       -- You can configure sections in the statusline by overriding their
       -- default behavior. For example, here we set the section for
@@ -631,6 +676,8 @@ require('lazy').setup({
       statusline.section_location = function()
         return '%2l:%-2v'
       end
+
+      statusline.setup { use_icons = vim.g.have_nerd_font }
 
       -- ... and there is more!
       --  Check out: https://github.com/echasnovski/mini.nvim
